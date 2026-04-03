@@ -1,0 +1,87 @@
+/**
+ * Project configuration schema and helpers
+ *
+ * Improvements:
+ * - Removed hardcoded "Elaris" naming
+ * - Strong typing with interfaces
+ * - Added enums for logging levels and environments
+ * - Provided factory + merge helpers for flexible config management
+ * - Supports structured destinations for extensibility
+ */
+
+export type Environment = 'development' | 'staging' | 'production'
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
+
+export interface LoggingConfig {
+  level: LogLevel
+  destinations: Array<'console' | 'file' | 'remote'>
+  filePath?: string
+}
+
+export interface FeatureFlags {
+  enableDiagnostics: boolean
+  enableRealTimeAlerts: boolean
+  enableMetrics?: boolean
+}
+
+export interface ProjectConfig {
+  projectName: string
+  environment: Environment
+  logging: LoggingConfig
+  features: FeatureFlags
+}
+
+/**
+ * Factory to create a default config
+ */
+export function createDefaultConfig(projectName: string): ProjectConfig {
+  return {
+    projectName,
+    environment: 'development',
+    logging: {
+      level: 'info',
+      destinations: ['console'],
+    },
+    features: {
+      enableDiagnostics: false,
+      enableRealTimeAlerts: false,
+      enableMetrics: false,
+    },
+  }
+}
+
+/**
+ * Merge a partial config into an existing one
+ */
+export function mergeConfig(
+  base: ProjectConfig,
+  overrides: Partial<ProjectConfig>
+): ProjectConfig {
+  return {
+    ...base,
+    ...overrides,
+    logging: { ...base.logging, ...overrides.logging },
+    features: { ...base.features, ...overrides.features },
+  }
+}
+
+/**
+ * Validate configuration
+ */
+export function validateConfig(cfg: ProjectConfig): void {
+  if (!cfg.projectName || cfg.projectName.trim().length === 0) {
+    throw new Error('Project name must not be empty')
+  }
+  if (!['development', 'staging', 'production'].includes(cfg.environment)) {
+    throw new Error(`Invalid environment: ${cfg.environment}`)
+  }
+  if (!['debug', 'info', 'warn', 'error'].includes(cfg.logging.level)) {
+    throw new Error(`Invalid log level: ${cfg.logging.level}`)
+  }
+  if (
+    cfg.logging.destinations.includes('file') &&
+    (!cfg.logging.filePath || cfg.logging.filePath.trim().length === 0)
+  ) {
+    throw new Error('File logging requires a valid filePath')
+  }
+}

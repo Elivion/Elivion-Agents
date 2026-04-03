@@ -1,0 +1,85 @@
+/**
+ * Schema and helpers for representing a token analysis experiment
+ *
+ * Improvements:
+ * - Added strong typing with interfaces
+ * - Introduced enums for status handling
+ * - Provided a factory function for safe creation
+ * - Added utility functions for updating status and attaching results
+ */
+
+export type ExperimentStatus = 'draft' | 'running' | 'completed' | 'failed'
+
+export interface ExperimentParameters {
+  tokenSymbol: string
+  analysisWindowMinutes: number
+  volatilityThreshold: number
+}
+
+export interface ExperimentResult {
+  averagePrice: number
+  volatility: number
+  anomalies: number
+  generatedAt: string
+}
+
+export interface Experiment {
+  experimentId: string
+  createdAt: string
+  description: string
+  parameters: ExperimentParameters
+  status: ExperimentStatus
+  results: ExperimentResult | null
+  notes: string
+}
+
+/**
+ * Factory for creating a new experiment
+ */
+export function createExperiment(
+  tokenSymbol: string,
+  analysisWindowMinutes: number,
+  volatilityThreshold: number,
+  description = ''
+): Experiment {
+  return {
+    experimentId: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    description,
+    parameters: {
+      tokenSymbol,
+      analysisWindowMinutes,
+      volatilityThreshold,
+    },
+    status: 'draft',
+    results: null,
+    notes: '',
+  }
+}
+
+/**
+ * Update experiment status
+ */
+export function updateExperimentStatus(
+  exp: Experiment,
+  status: ExperimentStatus
+): Experiment {
+  return { ...exp, status }
+}
+
+/**
+ * Attach results to experiment
+ */
+export function attachExperimentResults(
+  exp: Experiment,
+  results: ExperimentResult
+): Experiment {
+  return { ...exp, results, status: 'completed' }
+}
+
+/**
+ * Add a note
+ */
+export function addExperimentNote(exp: Experiment, note: string): Experiment {
+  return { ...exp, notes: exp.notes ? `${exp.notes}\n${note}` : note }
+}
